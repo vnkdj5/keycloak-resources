@@ -1,0 +1,41 @@
+version: "3.9"
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:15.4
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432"
+    networks:
+      - app-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.0.1
+    command: start-dev
+    #entrypoint: ["/opt/keycloak/bin/kc.sh", "start-dev", "--log-level=INFO"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: Pa55w0rd
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./data/keycloak/providers:/opt/keycloak/providers ##You can add your SPIs/jars in this directo
+      - ./data/keycloak/themes:/opt/keycloak/themes ## You can add your themes in this directory
+    ports:
+      - 8090:8080
+    depends_on:
+      - postgres
+    networks:
+      - app-network
